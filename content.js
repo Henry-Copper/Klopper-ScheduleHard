@@ -1,7 +1,7 @@
 (function () {
   let tbl = document.getElementById("win0divUP_ML_TABLES_HTMLAREA");
   if (!tbl) {
-    alert("Please select sem 1 or sem 2 schedule");
+    alert("Please select Semester 1 or Semester 2 schedule.");
     return null;
   }
   const contentRows = Array.from(tbl.querySelectorAll("tr")).slice(1);

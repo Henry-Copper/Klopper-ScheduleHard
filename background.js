@@ -1,16 +1,14 @@
 chrome.action.onClicked.addListener((tab) => {
   chrome.scripting
     .executeScript({ target: { tabId: tab.id }, files: ["content.js"] })
-    .then((res) => {
+    .then(async (res) => {
       chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse(res[0].result);
       });
 
-      chrome.action.setPopup({ popup: "index.html" });
-      chrome.action.openPopup();
+      await chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
     })
-    .catch((shit) => {
-      console.log("kak");
+    .catch((error) => {
+	    alert("whoopsie poopsie, something went wrong. sowwy :(");
     });
 });
-// bug: ensure only either selected S1 or S2

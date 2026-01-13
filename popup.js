@@ -215,86 +215,13 @@ function createButtons(moduleMap, table) {
       .forEach((el) => (el.style.backgroundColor = color));
     });
   });
-
-  /*
-	map.forEach((value, key) =>
-		{
-			const { mod, group } = value;
-			const id = JSON.stringify({mod, group });
-			const val = colorMap.get(id);
-			if (!val)
-			{
-				colorMap.set(id, colors[i++%colors.length]);
-			}
-			const { campus, lang, venue } = value;
-			butt.title = Object.values({ campus, lang, venue }).join(", ");
-			butt.style.backgroundColor = colorMap.get(id);
-			butt.style.color = 'white';
-
-			butt.addEventListener('mouseover', () => butt.style.border = '2px solid red');
-			
-			butt.addEventListener('click', () =>
-				{
-					if (value.chosen)
-					{
-						butt.style.backgroundColor = colorMap.get(id);
-						butt.style.color = 'white';
-					}
-					else
-					{
-						butt.style.backgroundColor = 'transparent';
-						butt.style.color = 'black';
-					}
-					value.chosen = !value.chosen;
-				}
-			);
-			cell.appendChild(butt);
-		}
-	);
-	*/
 }
 
 (async function () {
-  chrome.tabs.getCurrent(async (tab) => {
-    if (!tab) {
-      await chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
-    } else {
       const res = await chrome.runtime.sendMessage(null);
       const map = makeGlobalMap(res);
       createInfoTable(map);
       const tbl = createScheduleTable();
       createButtons(map, tbl);
-    }
-  });
-
-  /*
-		map.forEach((value, key) =>
-			{
-				const val = JSON.parse(key);
-
-				const butt = document.createElement("button");
-				butt.innerText = val.name + "" + val.activity + "" + val.group;
-				const { campus, language, venues } = value;
-				butt.title = Object.values({ campus, language, venues }).join(", ");
-				butt.addEventListener('click', () =>
-					{
-						if (value.chosen)
-						{
-							butt.style.backgroundColor="transparent";
-						}
-						else
-						{
-							butt.style.backgroundColor="red";
-						}
-						value.chosen = !value.chosen;
-					}
-				);
-				el.appendChild(butt);
-				console.log(value);
-				console.log(key);
-				console.log(el);
-			}
-		);
-		console.log(document.documentElement.outerHTML);
-		*/
+	    document.querySelector("#print").addEventListener("click", () => window.print());
 })();
