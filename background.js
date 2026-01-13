@@ -9,6 +9,6 @@ chrome.action.onClicked.addListener((tab) => {
       await chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
     })
     .catch((error) => {
-	    alert("whoopsie poopsie, something went wrong. sowwy :(");
+      alert("whoopsie poopsie, something went wrong. sowwy :(");
     });
 });

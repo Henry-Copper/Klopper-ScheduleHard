@@ -18,7 +18,7 @@ function makeGlobalMap(info) {
       map.set(entry.act, {
         ...rest,
         venue: [rest.venue],
-	chosenTimes: [],
+        chosenTimes: [],
         sTime: startTime,
         eTime: endTime,
       });
@@ -74,7 +74,7 @@ function createInfoTable(moduleMap) {
         actRow.dataset.mod = mod;
         actRow.dataset.group = group;
         actRow.dataset.act = act;
-	actRow.dataset.time = "";
+        actRow.dataset.time = "";
         actRow.appendChild(document.createElement("td")); // padding
         actRow.appendChild(document.createElement("td"));
         actRow.appendChild(actCell);
@@ -144,12 +144,14 @@ function createButtons(moduleMap, table) {
       color = colors[i++ % colors.length];
       groupMap.set(colorKey, color);
     }
-	let moduleRow = document.querySelector(`[data-mod=${mod}][data-group=""]`);
-	moduleRow.dataset.numSelected = "0";
+    let moduleRow = document.querySelector(`[data-mod=${mod}][data-group=""]`);
+    moduleRow.dataset.numSelected = "0";
     groupMap.forEach((activityMap, group) => {
       if (group === colorKey) return;
-	let groupRow = document.querySelector(`[data-mod="${mod}"][data-group="${group}"][data-act=""]`);
-	groupRow.dataset.numSelected = "0";
+      let groupRow = document.querySelector(
+        `[data-mod="${mod}"][data-group="${group}"][data-act=""]`,
+      );
+      groupRow.dataset.numSelected = "0";
       activityMap.forEach((info, act) => {
         for (let time = info.sTime; time < info.eTime; time++) {
           const cell = table
@@ -158,70 +160,79 @@ function createButtons(moduleMap, table) {
           const butt = document.createElement("button");
           butt.innerHTML = mod + "&nbsp" + group + "&nbsp" + act;
           butt.title = getInfoText(info);
-	butt.dataset.mod = mod;
-	butt.dataset.group = group;
-	butt.dataset.act = act;
-	butt.dataset.time = time;
+          butt.dataset.mod = mod;
+          butt.dataset.group = group;
+          butt.dataset.act = act;
+          butt.dataset.time = time;
 
-	    let groupElements = undefined;
+          let groupElements = undefined;
           butt.addEventListener("mouseover", () => {
-		  if (!groupElements)
-			  groupElements = document.querySelectorAll(`:is([data-mod=${mod}][data-group="${group}"], [data-mod=${mod}][data-group=""])`);
-		  Array.from(groupElements).filter(el => el.style.backgroundColor != selectedColor).forEach((el) => el.style.backgroundColor = hoverColor);
-		  
+            if (!groupElements)
+              groupElements = document.querySelectorAll(
+                `:is([data-mod=${mod}][data-group="${group}"], [data-mod=${mod}][data-group=""])`,
+              );
+            Array.from(groupElements)
+              .filter((el) => el.style.backgroundColor != selectedColor)
+              .forEach((el) => (el.style.backgroundColor = hoverColor));
           });
-	
-	butt.addEventListener("mouseout", () => 
-		{
-			Array.from(groupElements).filter(el => el.style.backgroundColor != selectedColor).forEach((el) => el.style.backgroundColor = color);
-		}
-	);
 
-		let activityRow = document.querySelector(`[data-mod=${mod}][data-group="${group}"][data-act="${act}"][data-time=""]`);
-		activityRow.dataset.numSelected = "0";
+          butt.addEventListener("mouseout", () => {
+            Array.from(groupElements)
+              .filter((el) => el.style.backgroundColor != selectedColor)
+              .forEach((el) => (el.style.backgroundColor = color));
+          });
 
-		let affectedRows = [activityRow, groupRow, moduleRow];
+          let activityRow = document.querySelector(
+            `[data-mod=${mod}][data-group="${group}"][data-act="${act}"][data-time=""]`,
+          );
+          activityRow.dataset.numSelected = "0";
+
+          let affectedRows = [activityRow, groupRow, moduleRow];
 
           butt.addEventListener("click", () => {
-		  
-		  if (info.chosenTimes.includes(time))
-		  {
-			  info.chosenTimes = info.chosenTimes.filter((chosenTime) => chosenTime != time);
-			  butt.style.backgroundColor = hoverColor;
-			  affectedRows.forEach((row) => row.dataset.numSelected = parseInt(row.dataset.numSelected) - 1);
-		  }
-		  else
-		  {
-			  info.chosenTimes.push(time);
-			  butt.style.backgroundColor = selectedColor;
-			  affectedRows.forEach((row) => row.dataset.numSelected = parseInt(row.dataset.numSelected) + 1);
-		  }
+            if (info.chosenTimes.includes(time)) {
+              info.chosenTimes = info.chosenTimes.filter(
+                (chosenTime) => chosenTime != time,
+              );
+              butt.style.backgroundColor = hoverColor;
+              affectedRows.forEach(
+                (row) =>
+                  (row.dataset.numSelected =
+                    parseInt(row.dataset.numSelected) - 1),
+              );
+            } else {
+              info.chosenTimes.push(time);
+              butt.style.backgroundColor = selectedColor;
+              affectedRows.forEach(
+                (row) =>
+                  (row.dataset.numSelected =
+                    parseInt(row.dataset.numSelected) + 1),
+              );
+            }
 
-		  affectedRows.forEach((row) =>
-			  {
-				  if (row.dataset.numSelected === "0")
-					  row.style.backgroundColor = hoverColor;
-				  else
-					  row.style.backgroundColor = selectedColor;
-			  }
-		  );
-
+            affectedRows.forEach((row) => {
+              if (row.dataset.numSelected === "0")
+                row.style.backgroundColor = hoverColor;
+              else row.style.backgroundColor = selectedColor;
+            });
           });
           cell.appendChild(butt);
         }
       });
-    document
-      .querySelectorAll(`[data-mod="${mod}"]`)
-      .forEach((el) => (el.style.backgroundColor = color));
+      document
+        .querySelectorAll(`[data-mod="${mod}"]`)
+        .forEach((el) => (el.style.backgroundColor = color));
     });
   });
 }
 
 (async function () {
-      const res = await chrome.runtime.sendMessage(null);
-      const map = makeGlobalMap(res);
-      createInfoTable(map);
-      const tbl = createScheduleTable();
-      createButtons(map, tbl);
-	    document.querySelector("#print").addEventListener("click", () => window.print());
+  const res = await chrome.runtime.sendMessage(null);
+  const map = makeGlobalMap(res);
+  createInfoTable(map);
+  const tbl = createScheduleTable();
+  createButtons(map, tbl);
+  document
+    .querySelector("#print")
+    .addEventListener("click", () => window.print());
 })();
