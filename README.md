@@ -6,6 +6,6 @@ Tested on the UP Portal: use this extension to make scheduling your lectures eas
 
 #TuksOfNiks
 
-!(images/example-screenshot.png)
+![An example of the extension being used](images/example-screenshot.png)
 
 Go to your UP Portal > Timetables and select either "S1 Lectures" or "S2 Lectures"
