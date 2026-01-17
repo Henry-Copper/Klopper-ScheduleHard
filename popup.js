@@ -1,5 +1,23 @@
+const moduleMap = new Map();
+
+const hoverColor = "red";
+const selectedColor = "gold";
+const moduleColors = [
+  "#5F4690",
+  "#1D6996",
+  "#38A6A5",
+  "#0F8554",
+  "#73AF48",
+  "#EDAD08",
+  "#E17C05",
+  "#CC503E",
+  "#94346E",
+  "#6F4070",
+  "#994E95",
+  "#666666",
+];
+
 function makeGlobalMap(info) {
-  const moduleMap = new Map();
   info.forEach((entry) => {
     const startTime = parseInt(entry.time.split(":")[0]);
     const endTime = parseInt(entry.time.split(" - ")[1].split(":")[0]);
@@ -25,6 +43,23 @@ function makeGlobalMap(info) {
     else storedEntry.venue.push(entry.venue);
   });
 
+  let i = 0;
+
+  moduleMap.forEach((groupMap, mod) => {
+    if (mod.startsWith("_")) return;
+    groupMap.set("_moduleEvent_", []);
+    groupMap.set("_numSelected_", 0);
+    groupMap.set("_color_", moduleColors[i++ % moduleColors.length]);
+    groupMap.forEach((activityMap, group) => {
+      if (group.startsWith("_")) return;
+      activityMap.set("_groupEvent_", []);
+      activityMap.set("_numSelected_", 0);
+      activityMap.forEach((info, act) => {
+        info["_activityEvent_"] = [];
+      });
+    });
+  });
+
   return moduleMap;
 }
 
@@ -48,33 +83,95 @@ function createInfoTable(moduleMap) {
   infoTbl.appendChild(head);
 
   moduleMap.forEach((groupMap, mod) => {
+    if (mod.startsWith("_")) return;
+
+    const moduleColor = groupMap.get("_color_");
+
     const modCell = document.createElement("td");
     modCell.textContent = mod;
     const modRow = document.createElement("tr");
-    modRow.dataset.mod = mod;
-    modRow.dataset.group = "";
+    modRow.style.backgroundColor = moduleColor;
     modRow.appendChild(modCell);
     infoTbl.appendChild(modRow);
+
+    groupMap.get("_moduleEvent_").push((ev) => {
+      const numChosenModule = groupMap.get("_numSelected_");
+      switch (ev.type) {
+        case "mouseover":
+          if (numChosenModule === 0) modRow.style.backgroundColor = hoverColor;
+          break;
+        case "mouseout":
+          if (numChosenModule === 0) modRow.style.backgroundColor = moduleColor;
+          break;
+        case "click":
+          if (numChosenModule !== 0)
+            modRow.style.backgroundColor = selectedColor;
+          else modRow.style.backgroundColor = hoverColor;
+      }
+    });
+
     groupMap.forEach((activityMap, group) => {
+      if (group.startsWith("_")) return;
+
       const groupCell = document.createElement("td");
       groupCell.textContent = group;
       const groupRow = document.createElement("tr");
       groupRow.appendChild(document.createElement("td"));
-      groupRow.dataset.mod = mod;
-      groupRow.dataset.group = group;
-      groupRow.dataset.act = "";
+      groupRow.style.backgroundColor = moduleColor;
       groupRow.appendChild(groupCell);
       infoTbl.appendChild(groupRow);
+
+      activityMap.get("_groupEvent_").push((ev) => {
+        const numChosenGroup = activityMap.get("_numSelected_");
+        switch (ev.type) {
+          case "mouseover":
+            if (numChosenGroup === 0)
+              groupRow.style.backgroundColor = hoverColor;
+            break;
+          case "mouseout":
+            if (numChosenGroup === 0)
+              groupRow.style.backgroundColor = moduleColor;
+            break;
+          case "click":
+            if (numChosenGroup !== 0)
+              groupRow.style.backgroundColor = selectedColor;
+            else groupRow.style.backgroundColor = hoverColor;
+        }
+      });
+
       activityMap.forEach((info, act) => {
+        if (act.startsWith("_")) return;
+
         const actCell = document.createElement("td");
         actCell.textContent = act;
         const actInfo = document.createElement("td");
         actInfo.innerText = getInfoText(info);
         const actRow = document.createElement("tr");
-        actRow.dataset.mod = mod;
-        actRow.dataset.group = group;
-        actRow.dataset.act = act;
-        actRow.dataset.time = "";
+        actRow.style.backgroundColor = moduleColor;
+
+        activityMap.get("_groupEvent_").push((ev) => {
+          const numChosenTimes = info.chosenTimes.length;
+          switch (ev.type) {
+            case "mouseover":
+              if (numChosenTimes === 0)
+                actRow.style.backgroundColor = hoverColor;
+              break;
+            case "mouseout":
+              if (numChosenTimes === 0)
+                actRow.style.backgroundColor = moduleColor;
+              break;
+          }
+        });
+
+        info["_activityEvent_"].push((ev) => {
+          switch (ev.type) {
+            case "click":
+              if (info["chosenTimes"].length === 0)
+                actRow.style.backgroundColor = hoverColor;
+              else actRow.style.backgroundColor = selectedColor;
+              break;
+          }
+        });
         actRow.appendChild(document.createElement("td")); // padding
         actRow.appendChild(document.createElement("td"));
         actRow.appendChild(actCell);
@@ -118,110 +215,77 @@ function createScheduleTable() {
 }
 
 function createButtons(moduleMap, table) {
-  const colorMap = new Map();
-  let i = 0;
-  const colors = [
-    "#5F4690",
-    "#1D6996",
-    "#38A6A5",
-    "#0F8554",
-    "#73AF48",
-    "#EDAD08",
-    "#E17C05",
-    "#CC503E",
-    "#94346E",
-    "#6F4070",
-    "#994E95",
-    "#666666",
-  ];
-  const colorKey = "_color_";
-  const hoverColor = "red";
-  const selectedColor = "gold";
-
   moduleMap.forEach((groupMap, mod) => {
-    let color = groupMap.get(colorKey);
-    if (!color) {
-      color = colors[i++ % colors.length];
-      groupMap.set(colorKey, color);
-    }
-    let moduleRow = document.querySelector(`[data-mod=${mod}][data-group=""]`);
-    moduleRow.dataset.numSelected = "0";
+    if (mod.startsWith("_")) return;
+
+    const moduleColor = groupMap.get("_color_");
+
     groupMap.forEach((activityMap, group) => {
-      if (group === colorKey) return;
-      let groupRow = document.querySelector(
-        `[data-mod="${mod}"][data-group="${group}"][data-act=""]`,
-      );
-      groupRow.dataset.numSelected = "0";
+      if (group.startsWith("_")) return;
+
       activityMap.forEach((info, act) => {
+        if (act.startsWith("_")) return;
+
         for (let time = info.sTime; time < info.eTime; time++) {
           const cell = table
             .querySelector(`[data-name="${time}"`)
             .querySelector(`[data-name="${info.day}"]`);
+
           const butt = document.createElement("button");
+
+          activityMap.get("_groupEvent_").push((ev) => {
+            if (info.chosenTimes.includes(time)) return;
+            switch (ev.type) {
+              case "mouseover":
+                butt.style.backgroundColor = hoverColor;
+                break;
+              case "mouseout":
+                butt.style.backgroundColor = moduleColor;
+                break;
+            }
+          });
+
           butt.innerHTML = mod + "&nbsp" + group + "&nbsp" + act;
           butt.title = getInfoText(info);
-          butt.dataset.mod = mod;
-          butt.dataset.group = group;
-          butt.dataset.act = act;
-          butt.dataset.time = time;
+          butt.style.backgroundColor = moduleColor;
 
-          let groupElements = undefined;
-          butt.addEventListener("mouseover", () => {
-            if (!groupElements)
-              groupElements = document.querySelectorAll(
-                `:is([data-mod=${mod}][data-group="${group}"], [data-mod=${mod}][data-group=""])`,
-              );
-            Array.from(groupElements)
-              .filter((el) => el.style.backgroundColor != selectedColor)
-              .forEach((el) => (el.style.backgroundColor = hoverColor));
+          butt.addEventListener("mouseover", (ev) => {
+            groupMap.get("_moduleEvent_").forEach((f) => f(ev));
+            activityMap.get("_groupEvent_").forEach((f) => f(ev));
+            info["_activityEvent_"].forEach((f) => f(ev));
           });
-
-          butt.addEventListener("mouseout", () => {
-            Array.from(groupElements)
-              .filter((el) => el.style.backgroundColor != selectedColor)
-              .forEach((el) => (el.style.backgroundColor = color));
+          butt.addEventListener("mouseout", (ev) => {
+            groupMap.get("_moduleEvent_").forEach((f) => f(ev));
+            activityMap.get("_groupEvent_").forEach((f) => f(ev));
+            info["_activityEvent_"].forEach((f) => f(ev));
           });
-
-          let activityRow = document.querySelector(
-            `[data-mod=${mod}][data-group="${group}"][data-act="${act}"][data-time=""]`,
-          );
-          activityRow.dataset.numSelected = "0";
-
-          let affectedRows = [activityRow, groupRow, moduleRow];
-
-          butt.addEventListener("click", () => {
-            if (info.chosenTimes.includes(time)) {
-              info.chosenTimes = info.chosenTimes.filter(
-                (chosenTime) => chosenTime != time,
+          butt.addEventListener("click", (ev) => {
+            const chosenTimes = info["chosenTimes"];
+            if (chosenTimes.includes(time)) {
+              butt.style.backgroundColor = hoverColor; // it is necessarily being hovered if clicked
+              info["chosenTimes"] = chosenTimes.filter((t) => t !== time);
+              activityMap.set(
+                "_numSelected_",
+                activityMap.get("_numSelected_") - 1,
               );
-              butt.style.backgroundColor = hoverColor;
-              affectedRows.forEach(
-                (row) =>
-                  (row.dataset.numSelected =
-                    parseInt(row.dataset.numSelected) - 1),
-              );
+              groupMap.set("_numSelected_", groupMap.get("_numSelected_") - 1);
             } else {
-              info.chosenTimes.push(time);
               butt.style.backgroundColor = selectedColor;
-              affectedRows.forEach(
-                (row) =>
-                  (row.dataset.numSelected =
-                    parseInt(row.dataset.numSelected) + 1),
+              chosenTimes.push(time);
+              activityMap.set(
+                "_numSelected_",
+                activityMap.get("_numSelected_") + 1,
               );
+              groupMap.set("_numSelected_", groupMap.get("_numSelected_") + 1);
             }
-
-            affectedRows.forEach((row) => {
-              if (row.dataset.numSelected === "0")
-                row.style.backgroundColor = hoverColor;
-              else row.style.backgroundColor = selectedColor;
-            });
+            groupMap.get("_moduleEvent_").forEach((f) => f(ev));
+            activityMap.get("_groupEvent_").forEach((f) => f(ev));
+            info["_activityEvent_"].forEach((f) => f(ev));
           });
+
           cell.appendChild(butt);
         }
       });
-      document
-        .querySelectorAll(`[data-mod="${mod}"]`)
-        .forEach((el) => (el.style.backgroundColor = color));
     });
   });
 }
@@ -229,8 +293,8 @@ function createButtons(moduleMap, table) {
 (async function () {
   const res = await chrome.runtime.sendMessage(null);
   const map = makeGlobalMap(res);
-  createInfoTable(map);
   const tbl = createScheduleTable();
+  createInfoTable(map);
   createButtons(map, tbl);
   document
     .querySelector("#print")

@@ -1,4 +1,11 @@
 (function () {
+  const hostname = window.location.hostname;
+  if (hostname !== "upnet.up.ac.za" && hostname !== "www1.up.ac.za") {
+    alert(
+      "Silly silly - this isn't your UP Portal! Go to your UP Portal's 'timetables' page to use this extension!",
+    );
+    return;
+  }
   let tbl = document.getElementById("win0divUP_ML_TABLES_HTMLAREA");
   if (!tbl) {
     alert("Please select Semester 1 or Semester 2 schedule.");
